@@ -3,7 +3,7 @@ import csv
 from database_lib import *
 
 DBM = DBmanager()
-DBM.create_db()
+#DBM.create_db()
 
 
 with open('CS010_BLDC_FAN_JC.csv') as bom:
@@ -15,7 +15,7 @@ with open('CS010_BLDC_FAN_JC.csv') as bom:
         print("row=",row)
         DBM.add_product(
                 42, #row[11], #header.index(' Manufacturer_Part_Number '),
-                row[0], #.index(' Description '),
+                row[8], #.index(' Description '),
                 row[2], #.index(' Footprint '),
                 row[1], #.index(' Value '),
                 row[3]
