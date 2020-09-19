@@ -1,4 +1,6 @@
 import mysql.connector
+import csv
+
 
 class DBmanager:
     def __init__(self,restart=0):
@@ -17,17 +19,17 @@ class DBmanager:
 
     def create_db(self):
         self.mycursor.execute("""CREATE OR REPLACE TABLE categorie (
-                    id_cat INT KEY AUTO_INCREMENT,
+                    id_cat INT KEY,
                     descr VARCHAR(100)
                     ) """)
 
         print("created categorie")
-        self.mycursor.execute("""CREATE OR REPLACE TABLE sottocategorie (
-                id_sottocat INT KEY AUTO_INCREMENT,
+        self.mycursor.execute("""CREATE OR REPLACE TABLE sotto_categorie (
+                id_sottocat INT KEY,
                 id_cat INT NOT NULL,
                 descr VARCHAR(100),
                 CONSTRAINT `fk_sottocat`
-                  FOREIGN KEY(id_cat) REFERENCES categorie(id)
+                  FOREIGN KEY(id_cat) REFERENCES categorie(id_cat)
                   ON UPDATE CASCADE
                   ON DELETE CASCADE
                 ) """)
@@ -78,11 +80,12 @@ class DBmanager:
 
 
         
-        #self.mycursor.execute("""CREATE TABLE packages (
-        #        id_package INT KEY AUTO_INCREMENT,
-        #        descrizione VARCHAR(100)
-        #        ) """)
-        #print("created prodotti")
+        self.mycursor.execute("""CREATE TABLE packages (
+                id_package INT KEY AUTO_INCREMENT,
+                descrizione VARCHAR(100),
+                id_sottocat INT
+                ) """)
+        print("created packages")
 
 
 
@@ -90,7 +93,7 @@ class DBmanager:
                 id_prodotto INT KEY AUTO_INCREMENT,
                 id_cat INT,
                 id_sottocat INT,
-                codice_fornitore INT,
+                codice_fornitore VARCHAR(100),
                 valore VARCHAR(100),
                 package VARCHAR(100),
                 id_buco INT,
@@ -108,6 +111,33 @@ class DBmanager:
                 ) """)
         print("created magazzino")
 
+
+    def read_cat_from_csv(self):
+        tmpmem=[]
+        with open('files/cat.csv') as catfile:
+            cat_reader = csv.reader(catfile, delimiter=',')
+            header = next(cat_reader)
+            while "id" not in header:
+                header = next(cat_reader)
+            print(header)
+            for row in cat_reader:
+                tmpmem.append(row)
+                self.mycursor.execute("""INSERT INTO categorie (id_cat, descr ) VALUES( '%s', '%s')"""%(str(row[header.index('id')]), str(row[header.index('categoria')] )   ))
+                print(row)
+        with open('files/sotto_cat.csv') as catfile:
+            cat_reader = csv.reader(catfile, delimiter=';')
+            header = next(cat_reader)
+            while "id" not in header:
+                header = next(cat_reader)
+            for row in cat_reader:
+                print(row)
+                oid_cat = None
+                for ocat in tmpmem:
+                    if row[header.index('Categoria')]  in ocat:
+                        oid_cat = ocat[0]
+                self.mycursor.execute("""INSERT INTO sotto_categorie ( id_cat, id_sottocat, descr ) VALUES( "%s", "%s" , "%s")"""%( str(oid_cat),  str(row[header.index('id')]), str(row[header.index('Sottocategoria')])  ))
+        self.cnx.commit()
+
     def create_armadio(self):
         print("filling base data")
         self.mycursor.execute("""INSERT INTO armadi ( descr ) VALUES( 'armadio per componenti elettroniche' )""")
@@ -119,27 +149,75 @@ class DBmanager:
         self.mycursor.execute("""INSERT INTO slots ( id_cassetto , id_forma ) VALUES( '1' , '1' )""")
         self.mycursor.execute("""INSERT INTO slots ( id_cassetto , id_forma ) VALUES( '1' , '1' )""")
         self.mycursor.execute("""INSERT INTO slots ( id_cassetto , id_forma ) VALUES( '1' , '1' )""")
-        self.mycursor.execute("""INSERT INTO categorie ( descr ) VALUES( 'Componenti elettroniche')""")
-        self.mycursor.execute("""INSERT INTO sotto_categorie ( id_cat, descr ) VALUES( '1', 'Condensatori')""")
-        self.mycursor.execute("""INSERT INTO sotto_categorie ( id_cat, descr ) VALUES( '1', 'Resistenze')""")
         
-
+        
         self.cnx.commit()
+
+
+    def read_eeschema_bom(self, filename):
+        with open('files/boms/'+filename) as bom:
+            bom_reader = csv.reader(bom, delimiter=',')
+            header = next(bom_reader)
+            print(header)
+            fails= []
+            succ = []
+            for row in bom_reader:
+                try:
+                    self.add_product(
+                        row[header.index('Manufacturer_Part_Number')],
+                        row[header.index('Description')],
+                        row[header.index('Value')],
+                        row[header.index('Footprint')],
+                        row[header.index('Datasheet')]
+                        )
+                    succ.append(row)
+                except Exception as e:
+                    fails.append((row,e))
+        return (succ,fails)
 
     def add_product(self, id_fornitore, descr, value, package, datasheet ):
         #generate id product
         self.mycursor.execute("""INSERT INTO prodotti (
-                    codice_fornitore, valore, package, datasheet)
-                     VALUES('%s', '%s', '%s', '%s' )
+                    codice_fornitore, valore, package, datasheet, id_cat)
+                     VALUES('%s', '%s', '%s', '%s' , '12' )
                     """%(str(id_fornitore), str(value), str(package), str(datasheet)))
+        self.cnx.commit()
+   
+   
+    def get_categories(self):
+        self.mycursor.execute("""
+            SELECT *
+            FROM categorie
+            """)
+        res = []
+        for val in self.mycursor:
+            res.append(val)
+        return res
 
 
+    def get_sottocategories(self, cat):
+        self.mycursor.execute("""
+            SELECT id_sottocat, descr
+            FROM sotto_categorie
+            WHERE id_cat = %s
+            """%(str(cat)))
+        res = []
+        for val in self.mycursor:
+            res.append(val)
+        return res
 
-
-    def search_product(self, id_fornitore, id_interno, id_cat, id_sottocat):
+    def search_product(self, id_fornitore=None, id_interno=None, id_cat=None, id_sottocat=None):
+        self.mycursor.execute("""
+            SELECT *
+            FROM prodotti
+            WHERE id_cat = %s
+            """%(str(id_cat)))
         #restituisco linea tabella prodotti, da cui posso sapere slot e cassetto.
         #se non c'e' un id, ma solo parametri restituiso una lista
-        pass
+        res = []
+        for val in self.mycursor:
+            res.append(val)
+        return res
 
 
     def query_invoicex_and_get_new_products(self):

@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+<title>{{ title }}</title>
+  </head>
+  <body>
+<h1>Storage Manager</h1>
+<form action="/assign_position">
+  <input type="submit" value="Assign position to new components" />
+</form>
+
+<h2>Upload a new InteractiveBom</h2>
+  <form action = "/uploader" method = "POST" 
+      enctype = "multipart/form-data">
+    <input type = "file" name = "file" />
+    <input type = "submit" value = "Upload" />
+  </form>
+<a href="/gestionale?cat=0&sottocat=0"><h2>Vai al gestionale</h2></a>
+<h2>Or pick an old one</h2>
+  <ul>
+  {% for person in people %}
+    <li><a href="board/{{ person.name }}">{{ person.name }}</a></li>
+  {% endfor %}
+  </ul>
+  </body>
+</html>

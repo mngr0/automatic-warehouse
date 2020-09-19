@@ -2,10 +2,11 @@ import csv
 
 from database_lib import *
 
-DBM = DBmanager(restart=0)
+DBM = DBmanager(restart=1)
 
+DBM.read_cat_from_csv()
 
-with open('CS010_BLDC_FAN_JC.csv') as bom:
+with open('files/CS010_BLDC_FAN_JC.csv') as bom:
     bom_reader = csv.reader(bom, delimiter=',')
     header = next(bom_reader)
     for el in header:

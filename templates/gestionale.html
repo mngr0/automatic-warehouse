@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+  <head>
+<title> Gestionale </title>
+  </head>
+  <body>
+<h1>Gestionale</h1>
+<table border='1' style="border-collapse:collapse;">
+  <th>
+<h2>Upload CSV categorie</h2>
+  <form action = "/uploader_cat" method = "POST" 
+      enctype = "multipart/form-data">
+    <input type = "file" name = "file" />
+    <input type = "submit" value = "Upload" />
+  </form>
+  </th>
+  <th>
+
+<h2>Upload CSV sotto categorie</h2>
+  <form action = "/uploader_sotto_cat" method = "POST" 
+      enctype = "multipart/form-data">
+    <input type = "file" name = "file" />
+    <input type = "submit" value = "Upload" />
+  </form>
+  </th>
+  <th>
+<h2>Upload CSV EEschema Bom</h2>
+  <form action = "/uploader_BOM" method = "POST" 
+      enctype = "multipart/form-data">
+    <input type = "file" name = "file" />
+    <input type = "submit" value = "Upload" />
+  </form>
+  </th>
+</table>
+<h2>Visualizzazione dati</h2>
+
+  <select name="cat" form="provone">
+	  <option value="0" {% if selc== 0 %} selected {% endif %}> scegli categoria</option>
+    {% for cat in categorie %}
+    <option value="{{cat[0]}}" {% if selc == cat[0] %} selected {% endif %}>{{cat[1]}}</option>
+    {% endfor %}
+  </select>
+
+  <select name="sottocat" form="provone">
+    <option value="0" {% if selsc== 0 %} selected {% endif %}> scegli sottocategoria</option>
+    {% for sottocat in sottocategorie %}
+    <option value="{{sottocat[0]}}" {% if selsc == sottocat[0] %} selected {% endif %}>{{sottocat[1]}}</option>
+    {% endfor %}
+  </select>
+  <form id="provone">
+	  <input type = "submit">
+  </form>
+
+  <table>
+    {% for row in products %}
+    	<tr>
+    	{% for field in row %}
+	<td>
+		{{ field }}
+	</td>
+	{% endfor %}
+
+	</tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
