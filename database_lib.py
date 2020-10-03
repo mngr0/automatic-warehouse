@@ -75,6 +75,11 @@ class DBmanager:
                 id_slot INT KEY AUTO_INCREMENT,
                 id_cassetto INT,
                 id_forma INT
+                x1 INT,
+                y1 INT,
+                x2 INT,
+                y2 INT
+                
                 ) """)
         print("created slots")
 
